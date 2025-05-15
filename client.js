@@ -4,10 +4,10 @@ const app = express();
 const nanoid = require("nanoid");
 const config = require("./config.js");
 
-const AUTH_SERVER = `http://localhost:${config.PROVIDER_PORT}`;
-const AUTH_ENDPOINT = `${AUTH_SERVER}/oidc/auth`;
-
 app.use(cookieParser(config.COOKIE_SECRET));
+app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
+
 app.set("views", "./src/views");
 app.set("view engine", "ejs");
 
@@ -27,7 +27,24 @@ app.get("/login/oidc", (req, res) => {
     state,
   });
 
-  res.render("login.ejs", { link_url: `${AUTH_ENDPOINT}?${query.toString()}` });
+  res.render("login.ejs", {
+    link_url: `${config.AUTH_ENDPOINT}?${query.toString()}`,
+  });
+});
+
+app.post(config.REDIRECT_PATH, (req, res) => {
+  console.log(req?.body);
+  if (!req.signedCookies || !req.signedCookies.state) {
+    throw new Error("Unable to find state");
+  }
+  if (!req.body.state) {
+    throw new Error("No state in body");
+  }
+  if (req.body.state !== req.signedCookies.state) {
+    throw new Error("States don't match!");
+  }
+
+  res.render("oidc_redirect.ejs", { body: req.body });
 });
 
 app.listen(config.CLIENT_PORT, () => {
