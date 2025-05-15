@@ -1,22 +1,19 @@
 const express = require("express");
 const oidc = require("oidc-provider");
 const app = express();
-const port = 3000;
-
-const client_id = "foo";
-const client_secret = "bar";
+const config = require("./config");
 
 app.get("/", (req, res) => {
   res.send("Hello World!");
 });
 
-const provider = new oidc.Provider(`http://localhost:${port}`, {
+const provider = new oidc.Provider(`http://localhost:${config.PROVIDER_PORT}`, {
   clients: [
     {
-      client_id,
-      client_secret,
+      client_id: config.CLIENT_ID,
+      client_secret: config.CLIENT_SECRET,
       grant_types: ["authorization_code", "refresh_token"],
-      redirect_uris: [`http://localhost:${port}/oidc_redirect`],
+      redirect_uris: [config.REDIRECT_URI],
       response_types: ["code"],
     },
   ],
@@ -39,8 +36,8 @@ const provider = new oidc.Provider(`http://localhost:${port}`, {
 
 app.use("/oidc", provider.callback());
 
-app.listen(port, () => {
+app.listen(config.PROVIDER_PORT, () => {
   console.log(
-    `oidc-provider listening on port ${port}, check http://localhost:${port}/oidc/.well-known/openid-configuration`
+    `oidc-provider listening on port ${config.PROVIDER_PORT}, check http://localhost:${config.PROVIDER_PORT}/oidc/.well-known/openid-configuration`
   );
 });
